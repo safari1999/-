@@ -1,0 +1,116 @@
+//vigenere
+#include<iostream>
+#include<string>
+#include<cstring>
+#define max 1001
+using namespace std;
+
+//26个字母统计频率 
+float p[26] = {0.082, 0.015, 0.028, 0.043, 0.127, 0.022, 0.02, 0.061, 0.07, 0.002, 0.008, 0.04, 0.024, 0.067, 0.075, 0.019, 0.001, 0.06, 0.063, 0.091, 0.028, 0.01, 0.023, 0.001, 0.02, 0.001};
+
+int decrypt(string msg,string k)
+{
+	char *res=new char[max];
+	int klen=k.length();
+	int len=msg.length();
+	int j=0,z=0;
+	cout<<"******明文******"<<endl;
+	for(int i=0;i<len;i++){
+		if(j==klen){
+	        j=0;   //循环密钥
+	        res[z]=(msg[i]-k[j]+26)%26+'A';
+	        cout<<res[z];
+	    }else {
+	        res[z]=(msg[i]-k[j]+26)%26+'A';
+	        cout<<res[z];   
+	    }
+	    j++;
+	    z++;
+	}
+	return 1;
+}
+
+//计算密钥长度和密钥流 
+string solve(string s)
+{
+	int klen=1;//密钥长度
+	int slen=s.length(); //密文长度
+	cout<<endl<<"******分析过程******"<<endl;
+	while(1){
+		float ch[max]={0};//对不同klen的重合指数
+		float avg=0;//记录平均重合指数
+		for(int i=0;i<klen;i++){
+			int counter[26]={0};
+			for(int j=0;i+j*klen<slen;j++)
+			   counter[(s[i+j*klen]-'A')]++;//将密文段分为klen行，记录每列的各个字母数量
+			
+			float e=0.000f;
+			int L=0;
+			for(int k=0;k<26;k++)   
+	            L+=counter[k];//计算密文长度 
+	        L*=(L-1);
+		    for(int k=0;k<26;k++)        //分组计算重合指数IC 
+		       if(counter[k]!=0)
+		           e=e+((float)counter[k]*(float)(counter[k]-1))/(float)L;
+			ch[i]=e;
+		}
+		
+		for(int i=0;i<klen;i++)
+		   avg+=ch[i];
+		avg/=klen;          //求IC的平均值  
+		
+		cout<<"当密钥长度为"<<klen<<"时，平均重合指数为："<<avg<<endl;
+
+	    if (avg>=0.06)  break;    //判断退出条件，重合指数的平均值是否大于0.06 
+	    else  klen++; 
+	} 
+	
+	cout<<"当密钥长度为"<<klen<<"时，重合指数大于0.06。"<<endl;
+    cout<<"密钥长度为："<<klen<<endl; 	
+	
+	int key[100]={0};    //存放密钥 
+	for(int i=0;i<klen;i++)    //统计分组字母个数 
+	{	
+	  int g=0;   //密文移动g个位置 
+	  for(int t=0;t<26;t++)
+	  {
+	 	float x=0.000f;    //拟重合指数 	
+	    int counter[26]={ 0 };   //盛放字母个数的数组
+		for(int j=0;i+j*klen<slen;j++)
+		   counter[(int)(s[i+j*klen]-'A')]++;  
+        int L=0;
+        for(int k=0;k<26;k++)      //子串密文长度 
+            L+=counter[k];
+        for(int k=0;k<26;k++)
+            x=x+p[k]*counter[(k+g)%26];
+        if(x/L>0.055)
+        {
+        	key[i]=g;
+        	break;
+		}
+        else g++;
+	   }
+    }
+   cout<<"加密密钥为："; 
+   string k; 
+   char *res=new char[max];
+   for(int i=0;i<klen;i++)    //输出密钥字 
+   { 
+		cout<<char ('A'+key[i]);
+		k+=char('A'+key[i]);
+   }
+   cout<<endl<<endl;
+   return k;
+
+
+}
+
+int main()
+{
+	string test="KCCPKBGUFDPHQTYAVINRRTMVGRKDNBVFDETDGILTXRGUDDKOTFMBPVGEGLTGCKQRACQCWDNAWCRXIZAKFTLEWRPTYCQKYVXCHKFTPONCQQRHJVAJUWETMCMSPKQDYHJVDAHCTRLSVSKCGCZQQDZXGSFRLSWCWSJTBHAFSIASPRJAHKJRJUMVGKMITZHFPDISPZLVLGWTFPLKKEBDPGCEBSHCTJRWXBAFSPEZQNRWXCVYCGAONWDDKACKAWBBIKFTIOVKCGGHJVLNHIFFSQESVYCLACNVRWBBIREPBBVFEXOSCDYGZWPFDTKFQIYCWHJVLNHIQIBTKHJVNPIST";
+	cout<<"******密文******"<<endl<<test<<endl;
+	decrypt(test,solve(test)); 
+	cout<<endl;
+	system("pause");
+	return 0;
+}
